@@ -26,8 +26,7 @@ export async function POST(req: NextRequest) {
         })
 
         send('done', {
-          healthy: results.filter(r => r.status === 'healthy').length,
-          slow: results.filter(r => r.status === 'slow').length,
+          candidates: results.filter(r => r.status === 'candidate').length,
           total: lastTested,
           results,
         })

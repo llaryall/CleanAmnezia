@@ -11,8 +11,8 @@ interface ScanResult {
   ip: string
   port: number
   latency: number
-  colo: string
-  status: 'healthy' | 'slow' | 'dead'
+  packetLoss: number
+  status: 'candidate' | 'unreachable'
 }
 
 export default function Home() {
@@ -34,7 +34,7 @@ export default function Home() {
     setResults([])
     setProgress({ tested: 0, foundClean: 0 })
     setTestingIPs([])
-    showToast('Scanning for clean Cloudflare endpoints...', 'info')
+    showToast('Scanning for WARP-compatible endpoints...', 'info')
 
     try {
       const res = await fetch('/api/scan', {
@@ -66,7 +66,7 @@ export default function Home() {
           if (eventType === 'progress') {
             setProgress({ tested: data.tested, foundClean: data.foundClean })
             setTestingIPs(prev => [data.result.ip, ...prev.filter(ip => ip !== data.result.ip)].slice(0, 5))
-            if (data.result.status !== 'dead') {
+            if (data.result.status === 'candidate') {
               setResults(prev => {
                 if (prev.some(r => r.ip === data.result.ip && r.port === data.result.port)) return prev
                 return [...prev, data.result]
@@ -74,9 +74,9 @@ export default function Home() {
             }
           } else if (eventType === 'done') {
             setResults(data.results)
-            setProgress({ tested: data.total, foundClean: data.healthy + data.slow })
+            setProgress({ tested: data.total, foundClean: data.candidates })
             setTestingIPs([])
-            showToast(`Found ${data.healthy + data.slow} clean endpoints`, 'success')
+            showToast(`Found ${data.candidates} WARP candidates`, 'success')
           } else if (eventType === 'error') {
             showToast(data.error, 'error')
           }
@@ -98,7 +98,7 @@ export default function Home() {
           <div className="card card-cyan p-6 relative">
             <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-cyan-500/40 rounded-tl-xl" />
             <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-cyan-500/40 rounded-br-xl" />
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Cloudflare IP Scanner</h2>
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">WARP Endpoint Scanner</h2>
             <ScanButton scanning={scanning} progress={progress} testingIPs={testingIPs} onClick={handleScan} />
             <ResultsTable results={results} selectedIP={selectedIP} onSelectIP={setSelectedIP} scanning={scanning} />
           </div>
@@ -110,7 +110,7 @@ export default function Home() {
           </div>
         </div>
         <footer className="mt-8 text-center text-xs text-gray-500">
-          <p>CleanAmnezia &mdash; Cloudflare IP Scanner + AmneziaWG Config Generator</p>
+          <p>CleanAmnezia &mdash; WARP Endpoint Scanner + AmneziaWG Config Generator</p>
         </footer>
       </div>
       {toast && <Toast message={toast.message} type={toast.type} />}

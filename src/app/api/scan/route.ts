@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         })
 
         send('done', {
-          candidates: results.filter(r => r.status === 'candidate').length,
+          candidates: results.filter(r => r.status !== 'dead').length,
           total: lastTested,
           results,
         })
